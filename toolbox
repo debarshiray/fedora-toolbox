@@ -1140,13 +1140,17 @@ create()
 
 enter()
 (
+    prohibit_emit_escape_sequence="$1"
     emit_escape_sequence=false
-    host_id=$(get_host_id)
-    host_variant_id=$(get_host_variant_id)
 
-    if [ "$host_id" = "fedora" ] 2>&3 \
-       && { [ "$host_variant_id" = "silverblue" ] 2>&3 || [ "$host_variant_id" = "workstation" ] 2>&3; }; then
-        emit_escape_sequence=true
+    if ! $prohibit_emit_escape_sequence; then
+        host_id=$(get_host_id)
+        host_variant_id=$(get_host_variant_id)
+
+        if [ "$host_id" = "fedora" ] 2>&3 \
+           && { [ "$host_variant_id" = "silverblue" ] 2>&3 || [ "$host_variant_id" = "workstation" ] 2>&3; }; then
+            emit_escape_sequence=true
+        fi
     fi
 
     run "$emit_escape_sequence" true false "$SHELL" -l
@@ -2420,6 +2424,7 @@ case $op in
         exit
         ;;
     enter )
+        prohibit_emit_escape_sequence=false
         while has_prefix "$1" -; do
             case $1 in
                 -c | --container )
@@ -2438,6 +2443,9 @@ case $op in
                     exit_if_non_positive_argument --release "$arg"
                     release=$arg
                     ;;
+                -o | --once )
+                    prohibit_emit_escape_sequence=true
+                    ;;
                 * )
                     exit_if_unrecognized_option "$1"
             esac
@@ -2447,7 +2455,7 @@ case $op in
         if ! update_container_and_image_names; then
             exit 1
         fi
-        enter
+        enter "$prohibit_emit_escape_sequence"
         exit
         ;;
     help )
