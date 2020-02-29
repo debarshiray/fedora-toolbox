@@ -1079,7 +1079,7 @@ create()
             --dns none \
             --env TOOLBOX_PATH="$TOOLBOX_PATH" \
             --group-add "$group_for_sudo" \
-            --hostname toolbox \
+            --hostname "$(echo $toolbox_container | sed 's/_/-/g')" \
             --ipc host \
             --label "com.github.containers.toolbox=true" \
             --label "com.github.debarshiray.toolbox=true" \
