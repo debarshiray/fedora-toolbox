@@ -358,7 +358,6 @@ func createContainer(container, image, release string, showCommandToEnter bool) 
 	entryPoint = append(entryPoint, mntLink...)
 
 	entryPoint = append(entryPoint, []string{
-		"--monitor-host",
 		"--shell", userShell,
 		"--uid", currentUser.Uid,
 		"--user", currentUser.Username,
