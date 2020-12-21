@@ -8,7 +8,6 @@ toolbox\-init\-container - Initialize a running container
                        *--home-link*
                        *--media-link*
                        *--mnt-link*
-                       *--monitor-host*
                        *--shell SHELL*
                        *--uid UID*
                        *--user USER*
@@ -42,7 +41,9 @@ Make `/mnt` a symbolic link to `/var/mnt`.
 
 **--monitor-host**
 
-Ensure that certain configuration files inside the toolbox container are kept
+This option is deprecated.
+
+Certain configuration files inside the toolbox container are always kept
 synchronized with their counterparts on the host. Currently, these files are
 `/etc/hosts` and `/etc/resolv.conf`.
 
