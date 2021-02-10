@@ -10,7 +10,11 @@ toolbox_welcome_stub="$toolbox_config/toolbox-welcome-shown"
 # shellcheck disable=2046
 # shellcheck disable=SC1091
 eval $(
-          . /usr/lib/os-release
+          if [ -f /usr/lib/os-release ]; then
+              . /usr/lib/os-release
+          else
+              . /etc/os-release
+          fi
 
           echo ID="$ID"
           echo VARIANT_ID="$VARIANT_ID"
