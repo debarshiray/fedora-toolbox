@@ -11,6 +11,7 @@ readonly CURDIR=$PWD
 
 setup() {
   cd "$HOME" || return 1
+  setup_containers_store
   cleanup_containers
 }
 
