@@ -264,6 +264,23 @@ func initContainer(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if utils.PathExists("/usr/lib/rpm") {
+		logrus.Debug("Configuring RPM to ignore bind mounts")
+
+		rpmConfigString := `# Written by Toolbox
+# https://github.com/containers/toolbox
+
+%_netsharedpath /dev:/media:/proc:/sys:/tmp:/var/lib/flatpak
+`
+
+		rpmConfigBytes := []byte(rpmConfigString)
+		if err := ioutil.WriteFile("/usr/lib/rpm/toolbox",
+			rpmConfigBytes,
+			0644); err != nil {
+			return fmt.Errorf("failed to configure RPM to ignore bind mounts: %w", err)
+		}
+	}
+
 	logrus.Debug("Setting up daily ticker")
 
 	daily, err := time.ParseDuration("24h")
