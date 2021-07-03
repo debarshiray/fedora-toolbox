@@ -32,6 +32,7 @@ import (
 	"github.com/containers/toolbox/pkg/version"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -140,6 +141,11 @@ func preRun(cmd *cobra.Command, args []string) error {
 	logrus.Debugf("TOOLBOX_PATH is %s", toolboxPath)
 
 	if err := migrate(); err != nil {
+		return err
+	}
+
+	err := setUpConfiguration()
+	if err != nil {
 		return err
 	}
 
@@ -354,6 +360,34 @@ func newSubIDFileError() error {
 
 	errMsg := builder.String()
 	return errors.New(errMsg)
+}
+
+func setUpConfiguration() error {
+	logrus.Debug("Setting up configuration")
+
+	configFiles := []string{
+		"/etc/containers/toolbox.conf",
+		fmt.Sprintf("%s/.config/containers/toolbox.conf", currentUser.HomeDir),
+	}
+
+	viper.SetConfigType("toml")
+
+	for _, configFile := range configFiles {
+		var err error
+
+		viper.SetConfigFile(configFile)
+
+		err = viper.MergeInConfig()
+
+		if err != nil {
+			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+				logrus.Debugf("configuration file %s was not found", configFile)
+			}
+			logrus.Debug(err)
+		}
+	}
+
+	return nil
 }
 
 func setUpGlobals() error {
