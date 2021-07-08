@@ -36,6 +36,7 @@ import (
 	"github.com/docker/go-units"
 	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"golang.org/x/sys/unix"
 )
 
@@ -133,6 +134,9 @@ func init() {
 	}
 
 	ContainerNameDefault = ContainerNamePrefixDefault + "-" + releaseDefault
+
+	viper.SetDefault("general.default_distro", distroDefault)
+	viper.SetDefault("general.default_release", releaseDefault)
 }
 
 func AskForConfirmation(prompt string) bool {
@@ -288,7 +292,7 @@ func GetContainerNamePrefixForImage(image string) (string, error) {
 
 func GetDefaultImageForDistro(distro, release string) string {
 	if _, supportedDistro := supportedDistros[distro]; !supportedDistro {
-		distro = "fedora"
+		distro = viper.GetString("general.default_distro")
 	}
 
 	distroObj, supportedDistro := supportedDistros[distro]
@@ -580,11 +584,11 @@ func ShortID(id string) string {
 
 func ParseRelease(distro, str string) (string, error) {
 	if distro == "" {
-		distro = distroDefault
+		distro = viper.GetString("general.default_distro")
 	}
 
 	if _, supportedDistro := supportedDistros[distro]; !supportedDistro {
-		distro = "fedora"
+		distro = viper.GetString("general.default_distro")
 	}
 
 	distroObj, supportedDistro := supportedDistros[distro]
@@ -695,29 +699,63 @@ func JoinJSON(joinkey string, maps ...[]map[string]interface{}) []map[string]int
 	return json
 }
 
-// ResolveContainerAndImageNames takes care of standardizing names of containers and images.
+// ResolveContainerName standardizes the name of a container
+//
+// If no container name is specified then the name of the image will be used.
+func ResolveContainerName(container, image, release string) string {
+	logrus.Debug("Resolving container name")
+
+	if container != "" {
+		return container
+	}
+
+	container, err := GetContainerNamePrefixForImage(image)
+	if err != nil {
+		logrus.Debug(err)
+		return ""
+	}
+
+	tag := ImageReferenceGetTag(image)
+	if tag != "" {
+		container = container + "-" + tag
+	}
+
+	return container
+}
+
+// ResolveImageName standardizes the name of an image.
 //
 // If no image name is specified then the base image will reflect the platform of the host (even the version).
-// If no container name is specified then the name of the image will be used.
 //
 // If the host system is unknown then the base image will be 'fedora-toolbox' with a default version
-func ResolveContainerAndImageNames(container, distro, image, release string) (string, string, string, error) {
-	logrus.Debug("Resolving container and image names")
-	logrus.Debugf("Container: '%s'", container)
+func ResolveImageName(distro, image, release string) (string, string, error) {
+	logrus.Debug("Resolving image name")
 	logrus.Debugf("Distribution: '%s'", distro)
 	logrus.Debugf("Image: '%s'", image)
 	logrus.Debugf("Release: '%s'", release)
 
+	defer func() {
+		logrus.Debug("Resolved image name")
+		logrus.Debugf("Distribution: '%s'", distro)
+		logrus.Debugf("Image: '%s'", image)
+		logrus.Debugf("Release: '%s'", release)
+	}()
+
+	if viper.IsSet("general.default_image") {
+		image = viper.GetString("general.default_image")
+
+	}
+
 	if distro == "" {
-		distro = distroDefault
+		distro = viper.GetString("general.default_distro")
 	}
 
 	if distro != distroDefault && release == "" {
-		return "", "", "", fmt.Errorf("release not found for non-default distribution %s", distro)
+		return "", "", fmt.Errorf("release not found for non-default distribution %s", distro)
 	}
 
 	if release == "" {
-		release = releaseDefault
+		release = viper.GetString("general.default_release")
 	}
 
 	if image == "" {
@@ -725,29 +763,11 @@ func ResolveContainerAndImageNames(container, distro, image, release string) (st
 	} else {
 		release = ImageReferenceGetTag(image)
 		if release == "" {
-			release = releaseDefault
+			release = viper.GetString("general.default_release")
 		}
 	}
 
-	if container == "" {
-		var err error
-		container, err = GetContainerNamePrefixForImage(image)
-		if err != nil {
-			return "", "", "", err
-		}
-
-		tag := ImageReferenceGetTag(image)
-		if tag != "" {
-			container = container + "-" + tag
-		}
-	}
-
-	logrus.Debug("Resolved container and image names")
-	logrus.Debugf("Container: '%s'", container)
-	logrus.Debugf("Image: '%s'", image)
-	logrus.Debugf("Release: '%s'", release)
-
-	return container, image, release, nil
+	return image, release, nil
 }
 
 func ShowManual(manual string) error {

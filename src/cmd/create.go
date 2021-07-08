@@ -148,13 +148,12 @@ func create(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	container, image, release, err := utils.ResolveContainerAndImageNames(container,
-		createFlags.distro,
-		createFlags.image,
-		release)
+	image, release, err := utils.ResolveImageName(createFlags.distro, createFlags.image, release)
 	if err != nil {
 		return err
 	}
+
+	container = utils.ResolveContainerName(container, image, release)
 
 	if err := createContainer(container, image, release, true); err != nil {
 		return err
