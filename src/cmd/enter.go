@@ -116,10 +116,12 @@ func enter(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	container, image, release, err := utils.ResolveContainerAndImageNames(container, enterFlags.distro, "", release)
+	image, release, err := utils.ResolveImageName(enterFlags.distro, "", release)
 	if err != nil {
 		return err
 	}
+
+	container = utils.ResolveContainerName(container, image, release)
 
 	userShell := os.Getenv("SHELL")
 	if userShell == "" {
