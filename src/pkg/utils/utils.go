@@ -36,6 +36,7 @@ import (
 	"github.com/docker/go-units"
 	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"golang.org/x/sys/unix"
 )
 
@@ -133,6 +134,9 @@ func init() {
 	}
 
 	ContainerNameDefault = ContainerNamePrefixDefault + "-" + releaseDefault
+
+	viper.SetDefault("general.default_distro", distroDefault)
+	viper.SetDefault("general.default_release", releaseDefault)
 }
 
 func AskForConfirmation(prompt string) bool {
@@ -288,7 +292,7 @@ func GetContainerNamePrefixForImage(image string) (string, error) {
 
 func GetDefaultImageForDistro(distro, release string) string {
 	if _, supportedDistro := supportedDistros[distro]; !supportedDistro {
-		distro = "fedora"
+		distro = viper.GetString("general.default_distro")
 	}
 
 	distroObj, supportedDistro := supportedDistros[distro]
@@ -577,11 +581,11 @@ func ShortID(id string) string {
 
 func ParseRelease(distro, str string) (string, error) {
 	if distro == "" {
-		distro = distroDefault
+		distro = viper.GetString("general.default_distro")
 	}
 
 	if _, supportedDistro := supportedDistros[distro]; !supportedDistro {
-		distro = "fedora"
+		distro = viper.GetString("general.default_distro")
 	}
 
 	distroObj, supportedDistro := supportedDistros[distro]
@@ -727,8 +731,20 @@ func ResolveImageName(distro, image, release string) (string, string, error) {
 	logrus.Debugf("Image: '%s'", image)
 	logrus.Debugf("Release: '%s'", release)
 
+	defer func() {
+		logrus.Debug("Resolved image name")
+		logrus.Debugf("Distribution: '%s'", distro)
+		logrus.Debugf("Image: '%s'", image)
+		logrus.Debugf("Release: '%s'", release)
+	}()
+
+	if viper.IsSet("general.default_image") {
+		image = viper.GetString("general.default_image")
+
+	}
+
 	if distro == "" {
-		distro = distroDefault
+		distro = viper.GetString("general.default_distro")
 	}
 
 	if distro != distroDefault && release == "" {
@@ -736,7 +752,7 @@ func ResolveImageName(distro, image, release string) (string, string, error) {
 	}
 
 	if release == "" {
-		release = releaseDefault
+		release = viper.GetString("general.default_release")
 	}
 
 	if image == "" {
@@ -744,13 +760,9 @@ func ResolveImageName(distro, image, release string) (string, string, error) {
 	} else {
 		release = ImageReferenceGetTag(image)
 		if release == "" {
-			release = releaseDefault
+			release = viper.GetString("general.default_release")
 		}
 	}
-
-	logrus.Debug("Resolved container and image names")
-	logrus.Debugf("Image: '%s'", image)
-	logrus.Debugf("Release: '%s'", release)
 
 	return image, release, nil
 }
