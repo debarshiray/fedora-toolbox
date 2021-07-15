@@ -7,6 +7,7 @@ toolbox\-init\-container - Initialize a running container
 **toolbox init-container** *--gid GID*
                        *--home HOME*
                        *--home-link*
+                       *--hook*
                        *--media-link*
                        *--mnt-link*
                        *--monitor-host*
@@ -65,6 +66,12 @@ option is required.
 **--home-link**
 
 Make `/home` a symbolic link to `/var/home`.
+
+**--hook**
+
+Run the specified command inside the container as the last step in the
+initialization process. The command's environment will include the `TOOLBOX_UID`
+and `TOOLBOX_USER` variables.
 
 **--media-link**
 

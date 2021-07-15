@@ -6,6 +6,7 @@ toolbox\-create - Create a new toolbox container
 ## SYNOPSIS
 **toolbox create** [*--distro DISTRO* | *-d DISTRO*]
                [*--image NAME* | *-i NAME*]
+               [*--init-hook COMMAND* | *-H COMMAND*]
                [*--release RELEASE* | *-r RELEASE*]
                [*CONTAINER*]
 
@@ -93,6 +94,13 @@ used with `--release`.
 If NAME does not contain a registry, the local image storage will be
 consulted, and if it's not present there then it will be pulled from a suitable
 remote registry.
+
+**--init-hook** COMMAND, **-H** COMMAND
+
+Run the specified command, which must exist in the image, inside the container
+as the last step in the initialization process. If no command is given, the
+image will be inspected for a `com.github.containers.toolbox.init` label, and
+the value used as the hook command if found.
 
 **--release** RELEASE, **-r** RELEASE
 
