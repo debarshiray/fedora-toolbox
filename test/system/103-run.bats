@@ -54,7 +54,11 @@ teardown() {
 @test "run: Run sudo id inside of the default container" {
   create_default_container
 
-  run $TOOLBOX --verbose run sudo id
+  output="$($TOOLBOX --verbose run sudo id 2>$BATS_TMPDIR/stderr)"
+  status="$?"
+
+  cat $BATS_TMPDIR/stderr
+  echo $output
 
   assert_success
   assert_output --partial "uid=0(root)"
