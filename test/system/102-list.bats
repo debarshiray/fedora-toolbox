@@ -5,6 +5,7 @@ load 'libs/bats-assert/load'
 load 'libs/helpers'
 
 setup() {
+  setup_containers_store
   cleanup_all
 }
 

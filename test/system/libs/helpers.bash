@@ -2,14 +2,17 @@
 
 load 'libs/bats-support/load'
 
+# Helpful globals
+readonly PROJECT_DIR=${PWD}
+readonly IMAGE_CACHE_DIR="${PROJECT_DIR}/image-cache"
+readonly TEMP_STORAGE_DIR="${PROJECT_DIR}/test-storage-root"
+readonly ROOTLESS_PODMAN_STORE_DIR="${TEMP_STORAGE_DIR}/storage"
+readonly PODMAN_STORE_CONFIG_FILE="${TEMP_STORAGE_DIR}/store.conf"
+
 # Podman and Toolbox commands to run
 readonly PODMAN=${PODMAN:-podman}
 readonly TOOLBOX=${TOOLBOX:-toolbox}
 readonly SKOPEO=$(command -v skopeo)
-
-# Helpful globals
-readonly PROJECT_DIR=${PWD}
-readonly IMAGE_CACHE_DIR="${PROJECT_DIR}/image-cache"
 
 # Images
 declare -Ag IMAGES=([busybox]="docker.io/library/busybox" \
@@ -24,6 +27,20 @@ function cleanup_all() {
 
 function cleanup_containers() {
   $PODMAN rm --all --force >/dev/null
+}
+
+
+function setup_containers_store() {
+  mkdir -p ${TEMP_STORAGE_DIR}
+  # Setup a storage config file for PODMAN
+  echo -e "[storage]\n  driver = \"overlay\"\n  rootless_storage_path = \"${ROOTLESS_PODMAN_STORE_DIR}\"\n" > ${PODMAN_STORE_CONFIG_FILE}
+  export CONTAINERS_STORAGE_CONF=${PODMAN_STORE_CONFIG_FILE}
+}
+
+
+function _clean_containers_store() {
+  cleanup_all
+  rm -rf ${TEMP_STORAGE_DIR}
 }
 
 
@@ -79,9 +96,10 @@ function _pull_and_cache_distro_image() {
   if [ ! -d ${IMAGE_CACHE_DIR} ]; then
     mkdir -p ${IMAGE_CACHE_DIR}
   fi
-
-  run $SKOPEO copy --dest-compress containers-storage:${image} dir:${IMAGE_CACHE_DIR}/${image_archive}
-
+  
+  # https://github.com/containers/skopeo/issues/547 for the options for containers-storage
+  run $SKOPEO copy --dest-compress "containers-storage:[overlay@$ROOTLESS_PODMAN_STORE_DIR+$ROOTLESS_PODMAN_STORE_DIR]${image}" dir:${IMAGE_CACHE_DIR}/${image_archive}
+  
   if [ "$status" -ne 0 ]; then
     echo "Failed to cache image ${image} to ${IMAGE_CACHE_DIR}/${image_archive}"
     assert_success
@@ -134,7 +152,8 @@ function pull_distro_image() {
     return
   fi
 
-  run $SKOPEO copy "dir:${IMAGE_CACHE_DIR}/${image_archive}" "containers-storage:${image}"
+  # https://github.com/containers/skopeo/issues/547 for the options for containers-storage
+  run $SKOPEO copy "dir:${IMAGE_CACHE_DIR}/${image_archive}" "containers-storage:[overlay@$ROOTLESS_PODMAN_STORE_DIR+$ROOTLESS_PODMAN_STORE_DIR]${image}"
   if [ "$status" -ne 0 ]; then
     echo "Failed to load image ${image} from cache ${IMAGE_CACHE_DIR}/${image_archive}"
     assert_success
