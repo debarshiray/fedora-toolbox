@@ -5,6 +5,7 @@ go_build_wrapper_program = find_program('go-build-wrapper')
 
 sources = files(
   'toolbox.go',
+  'cmd/completion.go',
   'cmd/create.go',
   'cmd/enter.go',
   'cmd/help.go',
