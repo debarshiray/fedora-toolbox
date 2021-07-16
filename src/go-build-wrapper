@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+readonly WRAPPED_FUNCTIONS="--wrap,__libc_start_main,--wrap,pthread_attr_getstacksize,--wrap,pthread_create,--wrap,pthread_detach,--wrap,pthread_sigmask"
+
 
 if [ "$#" -ne 4 ]; then
     echo "go-build-wrapper: wrong arguments" >&2
@@ -27,5 +29,5 @@ if ! cd "$1"; then
     exit 1
 fi
 
-go build -trimpath -ldflags "-extldflags '-Wl,--wrap,pthread_sigmask $4' -linkmode external -X github.com/containers/toolbox/pkg/version.currentVersion=$3" -o "$2/toolbox"
+go build -trimpath -ldflags "-extldflags '-Wl,$WRAPPED_FUNCTIONS $4' -linkmode external -X github.com/containers/toolbox/pkg/version.currentVersion=$3" -o "$2/toolbox"
 exit "$?"

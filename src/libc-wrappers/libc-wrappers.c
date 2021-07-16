@@ -16,7 +16,144 @@
 
 
 #include <signal.h>
+#include <pthread.h>
+#include <link.h>
 
+
+/*
+  __libc_start_main wrapping
+ */
+
+struct startup_info
+{
+	void *sda_base;
+	int (*main) (int, char **, char **, void *);
+	int (*init) (int, char **, char **, void *);
+	void (*fini) (void);
+};
+
+extern int __libc_start_main (int argc, char **argv,
+		   char **ev,
+		   ElfW (auxv_t) * auxvec,
+		   void (*rtld_fini) (void),
+		   struct startup_info * stinfo,
+		   char **stack_on_entry);
+
+
+#if defined __aarch64__
+__asm__(".symver __libc_start_main,__libc_start_main@GLIBC_2.17");
+#elif defined __arm__
+__asm__(".symver __libc_start_main,__libc_start_main@GLIBC_2.4");
+#elif defined __i386__
+__asm__(".symver __libc_start_main,__libc_start_main@GLIBC_2.0");
+#elif defined __powerpc64__ && _CALL_ELF == 2 /* ppc64le */
+__asm__(".symver __libc_start_main,__libc_start_main@GLIBC_2.17");
+#elif defined __s390x__
+__asm__(".symver __libc_start_main,__libc_start_main@GLIBC_2.2");
+#elif defined __x86_64__
+__asm__(".symver __libc_start_main,__libc_start_main@GLIBC_2.2.5");
+#else
+#error "Please specify symbol version for __libc_start_main"
+#endif
+
+
+int
+__wrap___libc_start_main (int argc, char **argv,
+		   char **ev,
+		   ElfW (auxv_t) * auxvec,
+		   void (*rtld_fini) (void),
+		   struct startup_info * stinfo,
+		   char **stack_on_entry)
+{
+  return __libc_start_main (argc, argv, ev, auxvec, rtld_fini, stinfo, stack_on_entry);
+}
+
+
+/*
+  pthread_attr_getstacksize wrapping
+ */
+#if defined __aarch64__
+__asm__(".symver pthread_attr_getstacksize,pthread_attr_getstacksize@GLIBC_2.17");
+#elif defined __arm__
+__asm__(".symver pthread_attr_getstacksize,pthread_attr_getstacksize@GLIBC_2.4");
+#elif defined __i386__
+__asm__(".symver pthread_attr_getstacksize,pthread_attr_getstacksize@GLIBC_2.1");
+#elif defined __powerpc64__ && _CALL_ELF == 2 /* ppc64le */
+__asm__(".symver pthread_attr_getstacksize,pthread_attr_getstacksize@GLIBC_2.17");
+#elif defined __s390x__
+__asm__(".symver pthread_attr_getstacksize,pthread_attr_getstacksize@GLIBC_2.2");
+#elif defined __x86_64__
+__asm__(".symver pthread_attr_getstacksize,pthread_attr_getstacksize@GLIBC_2.2.5");
+#else
+#error "Please specify symbol version for pthread_attr_getstacksize"
+#endif
+
+
+int
+__wrap_pthread_attr_getstacksize (const pthread_attr_t *attr, size_t *stacksize)
+{
+  return pthread_attr_getstacksize (attr, stacksize);
+}
+
+
+/*
+ pthread_create wrapping
+ */
+#if defined __aarch64__
+__asm__(".symver pthread_create,pthread_create@GLIBC_2.17");
+#elif defined __arm__
+__asm__(".symver pthread_create,pthread_create@GLIBC_2.4");
+#elif defined __i386__
+__asm__(".symver pthread_create,pthread_create@GLIBC_2.0");
+#elif defined __powerpc64__ && _CALL_ELF == 2 /* ppc64le */
+__asm__(".symver pthread_create,pthread_create@GLIBC_2.17");
+#elif defined __s390x__
+__asm__(".symver pthread_create,pthread_create@GLIBC_2.2");
+#elif defined __x86_64__
+__asm__(".symver pthread_create,pthread_create@GLIBC_2.2.5");
+#else
+#error "Please specify symbol version for pthread_create"
+#endif
+
+
+int
+__wrap_pthread_create (pthread_t *newthread, const pthread_attr_t *attr,
+                       void *(*start_routine) (void *), void *arg)
+{
+  return pthread_create(newthread, attr, start_routine, arg);
+}
+
+
+/*
+ pthread_detach wrapping
+ */
+#if defined __aarch64__
+__asm__(".symver pthread_detach,pthread_detach@GLIBC_2.17");
+#elif defined __arm__
+__asm__(".symver pthread_detach,pthread_detach@GLIBC_2.4");
+#elif defined __i386__
+__asm__(".symver pthread_detach,pthread_detach@GLIBC_2.0");
+#elif defined __powerpc64__ && _CALL_ELF == 2 /* ppc64le */
+__asm__(".symver pthread_detach,pthread_detach@GLIBC_2.17");
+#elif defined __s390x__
+__asm__(".symver pthread_detach,pthread_detach@GLIBC_2.2");
+#elif defined __x86_64__
+__asm__(".symver pthread_detach,pthread_detach@GLIBC_2.2.5");
+#else
+#error "Please specify symbol version for pthread_detach"
+#endif
+
+
+int
+__wrap_pthread_detach (pthread_t th)
+{
+  return pthread_detach (th);
+}
+
+
+/* 
+ pthread_sigmask wrapping
+ */
 
 #if defined __aarch64__
 __asm__(".symver pthread_sigmask,pthread_sigmask@GLIBC_2.17");
