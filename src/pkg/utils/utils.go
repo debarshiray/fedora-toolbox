@@ -108,6 +108,14 @@ var (
 			"ubi8",
 			false,
 		},
+		"ubuntu": {
+			"ubuntu-toolbox",
+			"ubuntu-toolbox",
+			parseReleaseUbuntu,
+			"docker.io",
+			"jmennius",
+			false,
+		},
 	}
 )
 
@@ -629,6 +637,30 @@ func parseReleaseRHEL(release string) (string, error) {
 	}
 
 	return release, nil
+}
+
+func parseReleaseUbuntu(str string) (string, error) {
+	var releaseParts []string
+
+	if releaseParts = strings.Split(str, "."); len(releaseParts) != 2 {
+		return "", errors.New("release must contain a single dot")
+	}
+
+	releaseYear, err := strconv.Atoi(releaseParts[0])
+	if err != nil {
+		return "", err
+	}
+
+	releaseMonth, err := strconv.Atoi(releaseParts[1])
+	if err != nil {
+		return "", err
+	}
+
+	if releaseYear <= 0 || releaseMonth < 0 {
+		return "", errors.New("release must be composed of two positive integers")
+	}
+
+	return str, nil
 }
 
 // PathExists wraps around os.Stat providing a nice interface for checking an existence of a path.
